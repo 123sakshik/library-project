@@ -16,7 +16,7 @@ const Login = () => {
                 username,
                 password,
             });
-            login(response.data.token, username);
+            login(response.data.token, response.data.user); // Assume user object includes role
             navigate('/');
         } catch (error) {
             console.error('Login failed:', error);

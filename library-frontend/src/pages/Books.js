@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 const Books = () => {
     const [books, setBooks] = useState([]);
     const { token, user } = useAuth();
-
+    const [isEditing, setIsEditing] = useState(false);
+  
     useEffect(() => {
         const fetchBooks = async () => {
             try {
@@ -42,7 +43,7 @@ const Books = () => {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            setBooks((prevBooks) => prevBooks.map((book) => (book.id === id ? response.data : book)));
+            setBooks((prevBooks) => prevBooks.map((book) => ( book._id=== id ? response.data : book)));
         } catch (error) {
             console.error('Error editing book:', error);
         }
@@ -55,7 +56,7 @@ const Books = () => {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            setBooks((prevBooks) => prevBooks.filter((book) => book.id !== id));
+            setBooks((prevBooks) => prevBooks.filter((book) =>  book._id !== id));
         } catch (error) {
             console.error('Error deleting book:', error);
         }
@@ -64,43 +65,51 @@ const Books = () => {
     return (
         <div className="p-4">
             <h2 className="text-2xl font-bold mb-4">Books List</h2>
-            <button
-                className="mb-4 bg-blue-500 text-white p-2 rounded"
-                onClick={() =>
-                    addBook({
-                        title: 'New Book',
-                        author: 'Author Name',
-                        publishedYear: 2023,
-                        status: 'available',
-                    })
-                }>
-                Add Book
-            </button>
+            {user?.role === 'admin' && (
+                <button
+                    className="mb-4 bg-blue-500 text-white p-2 rounded"
+                    onClick={() =>
+                        addBook({
+                            title: 'New Book',
+                            author: 'Author Name',
+                            publishedYear: 2023,
+                            status: 'available',
+                        })
+                    }>
+                    Add Book
+                </button>
+            )}
             <ul>
                 {books.map((book) => (
-                    <li key={book.id} className="mb-2">
+                    <li key={ book._id} className="mb-2">
                         <div className="p-2 border rounded shadow">
                             <h3 className="text-lg font-semibold">{book.title}</h3>
                             <p>Author: {book.author}</p>
                             <p>Status: {book.status}</p>
                             <p>Published Year: {book.publishedYear}</p>
-                            <button
-                                className="mt-2 bg-yellow-500 text-white p-1 rounded"
-                                onClick={() =>
-                                    editBook(book.id, {
-                                        title: `${book.title} (Edited)`,
-                                        author: book.author,
-                                        publishedYear: book.publishedYear,
-                                        status: book.status,
-                                    })
-                                }>
-                                Edit
-                            </button>
-                            <button
-                                className="mt-2 ml-2 bg-red-500 text-white p-1 rounded"
-                                onClick={() => deleteBook(book.id)}>
-                                Delete
-                            </button>
+                            console.log('user',user)
+                            {user?.role === 'admin' && (
+                                
+                                <>
+                                    <button
+                                        className="mt-2 bg-yellow-500 text-white p-1 rounded"
+                                        onClick={() =>
+                                            editBook( book._id, {
+                                                title: `${book.title} (Edited)`,
+                                                author: book.author,
+                                                publishedYear: book.publishedYear,
+                                                status: book.status,
+                                            })
+                                        }>
+                                        Edit
+                                    </button>
+                                    <button
+                                        className="mt-2 ml-2 bg-red-500 text-white p-1 rounded"
+                                        onClick={() => deleteBook( book._id)}>
+                                        Delete
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </li>
                 ))}
