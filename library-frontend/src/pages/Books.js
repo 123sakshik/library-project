@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 const Books = () => {
     const [books, setBooks] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentBook, setCurrentBook] = useState(null); // Holds the book being added/edited
+    const [currentBook, setCurrentBook] = useState(null); 
     const { token, user } = useAuth();
 
     useEffect(() => {
@@ -29,7 +29,7 @@ const Books = () => {
 
         try {
             if (currentBook._id) {
-                // Edit existing book
+               
                 const response = await axios.put(`http://localhost:5000/books/${currentBook._id}`, currentBook, {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -114,7 +114,7 @@ const Books = () => {
                 ))}
             </ul>
 
-            {/* Modal for Add/Edit */}
+     
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                     <div className="bg-white p-4 rounded shadow-lg w-96">
