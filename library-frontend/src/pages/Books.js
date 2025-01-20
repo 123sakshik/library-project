@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext';
 
 const Books = () => {
     const [books, setBooks] = useState([]);
-    const [isEditing, setIsEditing] = useState(false);
-    const [currentBook, setCurrentBook] = useState(null); 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentBook, setCurrentBook] = useState(null); // Holds the book being added/edited
     const { token, user } = useAuth();
 
     useEffect(() => {
@@ -24,32 +24,33 @@ const Books = () => {
         fetchBooks();
     }, [token]);
 
-    const addBook = async (newBook) => {
-        try {
-            const response = await axios.post('http://localhost:5000/books', newBook, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            setBooks((prevBooks) => [...prevBooks, response.data]);
-        } catch (error) {
-            console.error('Error adding book:', error);
-        }
-    };
+    const saveBook = async (e) => {
+        e.preventDefault();
 
-    const editBook = async (id, updatedBook) => {
         try {
-            const response = await axios.put(`http://localhost:5000/books/${id}`, updatedBook, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            setBooks((prevBooks) =>
-                prevBooks.map((book) => (book._id === id ? response.data : book))
-            );
-            setIsEditing(false); // Close the modal
+            if (currentBook._id) {
+                // Edit existing book
+                const response = await axios.put(`http://localhost:5000/books/${currentBook._id}`, currentBook, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                setBooks((prevBooks) =>
+                    prevBooks.map((book) => (book._id === currentBook._id ? response.data : book))
+                );
+            } else {
+                // Add new book
+                const response = await axios.post('http://localhost:5000/books', currentBook, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                setBooks((prevBooks) => [...prevBooks, response.data]);
+            }
+
+            closeModal();
         } catch (error) {
-            console.error('Error editing book:', error);
+            console.error('Error saving book:', error.response?.data || error.message);
         }
     };
 
@@ -62,25 +63,18 @@ const Books = () => {
             });
             setBooks((prevBooks) => prevBooks.filter((book) => book._id !== id));
         } catch (error) {
-            console.error('Error deleting book:', error);
+            console.error('Error deleting book:', error.response?.data || error.message);
         }
     };
 
-    const openEditModal = (book) => {
-        setCurrentBook(book);
-        setIsEditing(true);
+    const openModal = (book = null) => {
+        setCurrentBook(book || { title: '', author: '', publishedYear: '', status: 'available' });
+        setIsModalOpen(true);
     };
 
-    const closeEditModal = () => {
-        setIsEditing(false);
+    const closeModal = () => {
+        setIsModalOpen(false);
         setCurrentBook(null);
-    };
-
-    const handleEditSubmit = (e) => {
-        e.preventDefault();
-        if (currentBook) {
-            editBook(currentBook._id, currentBook);
-        }
     };
 
     return (
@@ -89,14 +83,7 @@ const Books = () => {
             {user?.role === 'admin' && (
                 <button
                     className="mb-4 bg-blue-500 text-white p-2 rounded"
-                    onClick={() =>
-                        addBook({
-                            title: 'New Book',
-                            author: 'Author Name',
-                            publishedYear: 2023,
-                            status: 'available',
-                        })
-                    }>
+                    onClick={() => openModal()}>
                     Add Book
                 </button>
             )}
@@ -112,7 +99,7 @@ const Books = () => {
                                 <>
                                     <button
                                         className="mt-2 bg-yellow-500 text-white p-1 rounded"
-                                        onClick={() => openEditModal(book)}>
+                                        onClick={() => openModal(book)}>
                                         Edit
                                     </button>
                                     <button
@@ -127,12 +114,14 @@ const Books = () => {
                 ))}
             </ul>
 
-            {/* Edit Modal */}
-            {isEditing && currentBook && (
+            {/* Modal for Add/Edit */}
+            {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                     <div className="bg-white p-4 rounded shadow-lg w-96">
-                        <h3 className="text-lg font-bold mb-4">Edit Book</h3>
-                        <form onSubmit={handleEditSubmit}>
+                        <h3 className="text-lg font-bold mb-4">
+                            {currentBook._id ? 'Edit Book' : 'Add Book'}
+                        </h3>
+                        <form onSubmit={saveBook}>
                             <div className="mb-4">
                                 <label className="block text-sm font-medium mb-1">Title</label>
                                 <input
@@ -142,6 +131,7 @@ const Books = () => {
                                     onChange={(e) =>
                                         setCurrentBook({ ...currentBook, title: e.target.value })
                                     }
+                                    required
                                 />
                             </div>
                             <div className="mb-4">
@@ -153,6 +143,7 @@ const Books = () => {
                                     onChange={(e) =>
                                         setCurrentBook({ ...currentBook, author: e.target.value })
                                     }
+                                    required
                                 />
                             </div>
                             <div className="mb-4">
@@ -169,6 +160,7 @@ const Books = () => {
                                             publishedYear: e.target.value,
                                         })
                                     }
+                                    required
                                 />
                             </div>
                             <div className="mb-4">
@@ -187,7 +179,7 @@ const Books = () => {
                                 <button
                                     type="button"
                                     className="bg-gray-300 text-black px-4 py-2 rounded mr-2"
-                                    onClick={closeEditModal}>
+                                    onClick={closeModal}>
                                     Cancel
                                 </button>
                                 <button
